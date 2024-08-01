@@ -1078,7 +1078,9 @@ static CGFloat itemMargin = 5;
     
     if (tzImagePickerVc.selectedModels.count < tzImagePickerVc.maxImagesCount) {
         if (assetModel.type == TZAssetModelMediaTypeVideo && !tzImagePickerVc.allowPickingMultipleVideo) {
-            // 不能多选视频的情况下，不选中拍摄的视频
+            TZVideoPlayerController *videoPlayerVc = [[TZVideoPlayerController alloc] init];
+            videoPlayerVc.model = assetModel;
+            [self.navigationController pushViewController:videoPlayerVc animated:YES];
         } else {
             if ([[TZImageManager manager] isAssetCannotBeSelected:assetModel.asset]) {
                 return;
