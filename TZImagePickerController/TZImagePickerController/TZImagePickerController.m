@@ -4,7 +4,7 @@
 //
 //  Created by 谭真 on 15/12/24.
 //  Copyright © 2015年 谭真. All rights reserved.
-//  version 3.8.6 - 2024.06.27
+//  version 3.8.12 - 2026.2.6
 //  更多信息，请前往项目的github地址：https://github.com/banchichen/TZImagePickerController
 
 #import "TZImagePickerController.h"
@@ -658,7 +658,7 @@
 }
 
 - (void)settingBtnClick {
-    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+    [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString] options:@{} completionHandler:nil];
 }
 
 - (void)pushViewController:(UIViewController *)viewController animated:(BOOL)animated {
@@ -678,15 +678,6 @@
 - (void)removeSelectedModel:(TZAssetModel *)model {
     [_selectedModels removeObject:model];
     [_selectedAssetIds removeObject:model.asset.localIdentifier];
-}
-
-- (void)setSelectedModels:(NSMutableArray<TZAssetModel *> *)selectedModels {
-    _selectedModels = selectedModels;
-    NSMutableArray *selectedAssetIds = [NSMutableArray array];
-    for (TZAssetModel *model in selectedModels) {
-        [selectedAssetIds addObject:model.asset.localIdentifier];
-    }
-    _selectedAssetIds = selectedAssetIds;
 }
 
 - (UIImage *)createImageWithColor:(UIColor *)color size:(CGSize)size radius:(CGFloat)radius {
@@ -800,7 +791,9 @@
     }
     
     if (self.isFirstAppear && !imagePickerVc.navLeftBarButtonSettingBlock) {
-        self.navigationItem.backBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+        UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+        [TZCommonTools configBarButtonItem:backItem tzImagePickerVc:imagePickerVc];
+        self.navigationItem.backBarButtonItem = backItem;
     }
     
     [self configTableView];
@@ -906,7 +899,7 @@
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    TZAlbumCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TZAlbumCell"];
+    TZAlbumCell *cell = [tableView dequeueReusableCellWithIdentifier:@"TZAlbumCell" forIndexPath:indexPath];
     if (@available(iOS 13.0, *)) {
         cell.backgroundColor = UIColor.tertiarySystemBackgroundColor;
     }
@@ -950,6 +943,16 @@
 
 @end
 
+
+// 适配RTL的UICollectionViewFlowLayout
+@interface TZRTLLayout : UICollectionViewFlowLayout
+@end
+
+@implementation TZRTLLayout
+- (BOOL)flipsHorizontallyInOppositeLayoutDirection {
+    return [TZCommonTools tz_isRightToLeftLayout];
+}
+@end
 
 @implementation TZCommonTools
 
@@ -1039,6 +1042,12 @@
 }
 
 + (void)configBarButtonItem:(UIBarButtonItem *)item tzImagePickerVc:(TZImagePickerController *)tzImagePickerVc {
+#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 260000
+    if (@available(iOS 26.0, *)) {
+        // Keep the existing navigation bar appearance instead of mixing it with Liquid Glass.
+        item.hidesSharedBackground = YES;
+    }
+#endif
     item.tintColor = tzImagePickerVc.barItemTextColor;
     NSMutableDictionary *textAttrs = [NSMutableDictionary dictionary];
     textAttrs[NSForegroundColorAttributeName] = tzImagePickerVc.barItemTextColor;
@@ -1066,6 +1075,10 @@
         }
     }
     return notSelectable;
+}
+
++ (UICollectionViewFlowLayout *)tz_rtlFlowLayout {
+    return [[TZRTLLayout alloc] init];
 }
 
 @end
